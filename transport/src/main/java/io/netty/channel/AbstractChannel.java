@@ -456,6 +456,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             if (eventLoop == null) {
                 throw new NullPointerException("eventLoop");
             }
+            //判断是否已经注册
             if (isRegistered()) {
                 promise.setFailure(new IllegalStateException("registered to an event loop already"));
                 return;
@@ -465,9 +466,10 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         new IllegalStateException("incompatible event loop type: " + eventLoop.getClass().getName()));
                 return;
             }
-
+            //channel绑定eventLoop
             AbstractChannel.this.eventLoop = eventLoop;
 
+            //在EventLoop里面进行注册
             if (eventLoop.inEventLoop()) {
                 register0(promise);
             } else {
@@ -497,15 +499,18 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                     return;
                 }
                 boolean firstRegistration = neverRegistered;
+                //实际注册
                 doRegister();
                 neverRegistered = false;
                 registered = true;
 
                 // Ensure we call handlerAdded(...) before we actually notify the promise. This is needed as the
                 // user may already fire events through the pipeline in the ChannelFutureListener.
+                //回调配置的add
                 pipeline.invokeHandlerAddedIfNeeded();
 
                 safeSetSuccess(promise);
+                //回调register
                 pipeline.fireChannelRegistered();
                 // Only fire a channelActive if the channel has never been registered. This prevents firing
                 // multiple channel actives if the channel is deregistered and re-registered.

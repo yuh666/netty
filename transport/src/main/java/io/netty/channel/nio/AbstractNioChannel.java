@@ -380,6 +380,7 @@ public abstract class AbstractNioChannel extends AbstractChannel {
         boolean selected = false;
         for (;;) {
             try {
+                //使用jdk底层的channel 注册到Nio绑定的selector上面 不关注任何事件3 并且将netty包装的channel作为attachment绑定到jdk channel
                 selectionKey = javaChannel().register(eventLoop().unwrappedSelector(), 0, this);
                 return;
             } catch (CancelledKeyException e) {

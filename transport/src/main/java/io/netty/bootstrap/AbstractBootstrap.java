@@ -312,6 +312,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
         try {
             //创建channel方法执行的channel 比如服务端就是ServerSocketChannel
             channel = channelFactory.newChannel();
+            //init 初始化刚刚创建的channel
             init(channel);
         } catch (Throwable t) {
             if (channel != null) {
@@ -447,6 +448,7 @@ public abstract class AbstractBootstrap<B extends AbstractBootstrap<B, C>, C ext
     private static void setChannelOption(
             Channel channel, ChannelOption<?> option, Object value, InternalLogger logger) {
         try {
+
             if (!channel.config().setOption((ChannelOption<Object>) option, value)) {
                 logger.warn("Unknown channel option '{}' for channel '{}'", option, channel);
             }

@@ -131,12 +131,16 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
 
     @Override
     void init(Channel channel) throws Exception {
+        //获取所有的option
         final Map<ChannelOption<?>, Object> options = options0();
         synchronized (options) {
+            //设置到channel里面的config里面去
             setChannelOptions(channel, options, logger);
         }
 
+        //获取到所有的attr
         final Map<AttributeKey<?>, Object> attrs = attrs0();
+        //逐个设置到channel的attr中
         synchronized (attrs) {
             for (Entry<AttributeKey<?>, Object> e: attrs.entrySet()) {
                 @SuppressWarnings("unchecked")
@@ -144,12 +148,15 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
                 channel.attr(key).set(e.getValue());
             }
         }
-
+        //获取创建channel时创建的pipeline
         ChannelPipeline p = channel.pipeline();
-
+        //获取设置的workergroup
         final EventLoopGroup currentChildGroup = childGroup;
+        //获取设置的childHandler
         final ChannelHandler currentChildHandler = childHandler;
+        //获取设置的currentChildOptions
         final Entry<ChannelOption<?>, Object>[] currentChildOptions;
+        //获取设置的currentChildAttrs
         final Entry<AttributeKey<?>, Object>[] currentChildAttrs;
         synchronized (childOptions) {
             currentChildOptions = childOptions.entrySet().toArray(newOptionArray(0));
@@ -162,11 +169,12 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
             @Override
             public void initChannel(final Channel ch) throws Exception {
                 final ChannelPipeline pipeline = ch.pipeline();
+                //把自己设置的handler放到最后
                 ChannelHandler handler = config.handler();
                 if (handler != null) {
                     pipeline.addLast(handler);
                 }
-
+                //在nio线程内添加一个连接入器  ServerBootstrapAcceptor 并将child相关的group handler attr options 一并传入连接接入器管理
                 ch.eventLoop().execute(new Runnable() {
                     @Override
                     public void run() {

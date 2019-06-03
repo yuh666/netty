@@ -69,8 +69,11 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
      */
     protected AbstractChannel(Channel parent) {
         this.parent = parent;
+        //设置唯一的channelId发号器 里面使用的类似snowflake的实现 区别是snowflake用的long 这个用的是byte[]
         id = newId();
+        //设置关联的Unsafe Unsafe的具体类型由NioByte NioMessage自己实现
         unsafe = newUnsafe();
+        //创建pipeline
         pipeline = newChannelPipeline();
     }
 

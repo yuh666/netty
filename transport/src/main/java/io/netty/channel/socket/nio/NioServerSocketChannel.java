@@ -71,6 +71,7 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance
      */
     public NioServerSocketChannel() {
+        //创建jdk底层的ServerScoketChannel 并且传入selector 默认selector是KQueueSelectorImpl
         this(newSocket(DEFAULT_SELECTOR_PROVIDER));
     }
 
@@ -85,7 +86,9 @@ public class NioServerSocketChannel extends AbstractNioMessageChannel
      * Create a new instance using the given {@link ServerSocketChannel}.
      */
     public NioServerSocketChannel(ServerSocketChannel channel) {
+        //调用父类构造方法传入自身 和 感兴趣的事件 此处是Accept事件
         super(null, channel, SelectionKey.OP_ACCEPT);
+        //创建一个NioServerSocketChannelConfig来保存tcp配置相关的信息
         config = new NioServerSocketChannelConfig(this, javaChannel().socket());
     }
 

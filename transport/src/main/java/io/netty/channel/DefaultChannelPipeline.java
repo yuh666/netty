@@ -94,9 +94,11 @@ public class DefaultChannelPipeline implements ChannelPipeline {
         succeededFuture = new SucceededChannelFuture(channel, null);
         voidPromise =  new VoidChannelPromise(channel, true);
 
+        //有个默认的头节点和尾节点 每个节点都会保存scoketChannel实例
         tail = new TailContext(this);
         head = new HeadContext(this);
 
+        //是个双向链表
         head.next = tail;
         tail.prev = head;
     }

@@ -98,6 +98,7 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
      * Return the {@link Runnable} which is ready to be executed with the given {@code nanoTime}.
      * You should use {@link #nanoTime()} to retrieve the correct {@code nanoTime}.
      */
+    //取出比这个时间往前的任务 如果有就返回 并且移除 否就返回空
     protected final Runnable pollScheduledTask(long nanoTime) {
         assert inEventLoop();
 
@@ -224,11 +225,14 @@ public abstract class AbstractScheduledEventExecutor extends AbstractEventExecut
     protected void validateScheduled(long amount, TimeUnit unit) {
         // NOOP
     }
-
+    //将任务添加到NioEventLoop的定时任务队列中
     <V> ScheduledFuture<V> schedule(final ScheduledFutureTask<V> task) {
+        //这是一个线程不安全的普通的优先队列
         if (inEventLoop()) {
+            //在NioEventLoop线程内 直接添加
             scheduledTaskQueue().add(task);
         } else {
+            //否则将提交定时任务也封装成为一个task扔到taskQueue中
             execute(new Runnable() {
                 @Override
                 public void run() {

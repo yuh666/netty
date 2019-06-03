@@ -275,11 +275,17 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         }
     }
 
+    /**
+     * 从定时任务队列中拉取任务 放入taskQueue中
+     * @return
+     */
     private boolean fetchFromScheduledTaskQueue() {
         long nanoTime = AbstractScheduledEventExecutor.nanoTime();
         Runnable scheduledTask  = pollScheduledTask(nanoTime);
+        //取出所有时间在currTime之前的定时任务放入taskQueue
         while (scheduledTask != null) {
             if (!taskQueue.offer(scheduledTask)) {
+                //如果放入失败了的话 就重新放回定时队列
                 // No space left in the task queue add it back to the scheduledTaskQueue so we pick it up again.
                 scheduledTaskQueue().add((ScheduledFutureTask<?>) scheduledTask);
                 return false;
@@ -397,30 +403,34 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     protected boolean runAllTasks(long timeoutNanos) {
         fetchFromScheduledTaskQueue();
         Runnable task = pollTask();
+        //取出任务
         if (task == null) {
             afterRunningAllTasks();
             return false;
         }
-
+        //根据传的可执行时长计算截止时间
         final long deadline = ScheduledFutureTask.nanoTime() + timeoutNanos;
         long runTasks = 0;
         long lastExecutionTime;
         for (;;) {
             safeExecute(task);
-
+            //执行任务的次数
             runTasks ++;
 
             // Check timeout every 64 tasks because nanoTime() is relatively expensive.
             // XXX: Hard-coded value - will make it configurable if it is really a problem.
+            //每执行64计算一次是否超时了 因为nanoTime比较重
             if ((runTasks & 0x3F) == 0) {
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
+                //超时就停止
                 if (lastExecutionTime >= deadline) {
                     break;
                 }
             }
-
+            //继续取任务
             task = pollTask();
             if (task == null) {
+                //记录最后执行时间
                 lastExecutionTime = ScheduledFutureTask.nanoTime();
                 break;
             }

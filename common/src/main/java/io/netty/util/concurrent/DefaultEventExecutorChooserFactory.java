@@ -39,6 +39,11 @@ public final class DefaultEventExecutorChooserFactory implements EventExecutorCh
         }
     }
 
+    /**
+     * 当一个数是2的n次幂时 取反后面的值全是1 加上1之后之前最前面的1就又变回去了 而别的不行 因为1不是连续的 进位进不到那一位
+     * @param val
+     * @return
+     */
     private static boolean isPowerOfTwo(int val) {
         return (val & -val) == val;
     }

@@ -159,10 +159,14 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
     protected SingleThreadEventExecutor(EventExecutorGroup parent, Executor executor,
                                         boolean addTaskWakesUp, int maxPendingTasks,
                                         RejectedExecutionHandler rejectedHandler) {
+        //保存一下是哪个Group的
         super(parent);
         this.addTaskWakesUp = addTaskWakesUp;
+        //最大的task队列长度
         this.maxPendingTasks = Math.max(16, maxPendingTasks);
+        //保存一下Executor 用来创建NioEventLoop底层真正的线程
         this.executor = ThreadExecutorMap.apply(executor, this);
+        //NioEventLoop任务队列 就是阻塞队列
         taskQueue = newTaskQueue(this.maxPendingTasks);
         rejectedExecutionHandler = ObjectUtil.checkNotNull(rejectedHandler, "rejectedHandler");
     }

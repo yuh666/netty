@@ -139,8 +139,10 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         if (strategy == null) {
             throw new NullPointerException("selectStrategy");
         }
+        //保存一下provider
         provider = selectorProvider;
         final SelectorTuple selectorTuple = openSelector();
+        //绑定一下selector
         selector = selectorTuple.selector;
         unwrappedSelector = selectorTuple.unwrappedSelector;
         selectStrategy = strategy;

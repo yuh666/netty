@@ -60,6 +60,7 @@ public class DefaultThreadFactory implements ThreadFactory {
     }
 
     public DefaultThreadFactory(Class<?> poolType, boolean daemon, int priority) {
+        //初始化线程的名字
         this(toPoolName(poolType), daemon, priority);
     }
 
@@ -91,7 +92,7 @@ public class DefaultThreadFactory implements ThreadFactory {
             throw new IllegalArgumentException(
                     "priority: " + priority + " (expected: Thread.MIN_PRIORITY <= priority <= Thread.MAX_PRIORITY)");
         }
-
+        //每次创建一个EventLoopGroup poolId都会自增1
         prefix = poolName + '-' + poolId.incrementAndGet() + '-';
         this.daemon = daemon;
         this.priority = priority;
@@ -105,6 +106,8 @@ public class DefaultThreadFactory implements ThreadFactory {
 
     @Override
     public Thread newThread(Runnable r) {
+        //创建线程的时候 每次自增1
+        //有几个 Group就有几个Factory 每个Factory里面的nextId是单独的
         Thread t = newThread(FastThreadLocalRunnable.wrap(r), prefix + nextId.incrementAndGet());
         try {
             if (t.isDaemon() != daemon) {
@@ -121,6 +124,7 @@ public class DefaultThreadFactory implements ThreadFactory {
     }
 
     protected Thread newThread(Runnable r, String name) {
+        //采用的线程是netty封装的FastThreadLocalThread 其对ThreadLocalMap进行了改造
         return new FastThreadLocalThread(threadGroup, r, name);
     }
 }

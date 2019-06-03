@@ -199,6 +199,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             return new SelectorTuple(unwrappedSelector);
         }
 
+        //替换SelectorImpl里面的selectedKeys和publicSelectedKeys 用数组
         final Class<?> selectorImplClass = (Class<?>) maybeSelectorImplClass;
         final SelectedSelectionKeySet selectedKeySet = new SelectedSelectionKeySet();
 
@@ -208,7 +209,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                 try {
                     Field selectedKeysField = selectorImplClass.getDeclaredField("selectedKeys");
                     Field publicSelectedKeysField = selectorImplClass.getDeclaredField("publicSelectedKeys");
-
+                    //如果JDK版本大于9 那么就采用Unsafe直接操作字段偏移  否则就用反射
                     if (PlatformDependent.javaVersion() >= 9 && PlatformDependent.hasUnsafe()) {
                         // Let us try to use sun.misc.Unsafe to replace the SelectionKeySet.
                         // This allows us to also do this in Java9+ without any extra flags.
@@ -252,6 +253,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             logger.trace("failed to instrument a special java.util.Set into: {}", unwrappedSelector, e);
             return new SelectorTuple(unwrappedSelector);
         }
+        //将selectKeys直接保存到NioEventLoop中 直接遍历
         selectedKeys = selectedKeySet;
         logger.trace("instrumented a special java.util.Set into: {}", unwrappedSelector);
         return new SelectorTuple(unwrappedSelector,
@@ -626,15 +628,18 @@ public final class NioEventLoop extends SingleThreadEventLoop {
     }
 
     private void processSelectedKeysOptimized() {
+        //直接遍历替换后的数组
         for (int i = 0; i < selectedKeys.size; ++i) {
             final SelectionKey k = selectedKeys.keys[i];
             // null out entry in the array to allow to have it GC'ed once the Channel close
             // See https://github.com/netty/netty/issues/2363
+            //获取置为null
             selectedKeys.keys[i] = null;
 
             final Object a = k.attachment();
 
             if (a instanceof AbstractNioChannel) {
+                //如果是channel事件
                 processSelectedKey(k, (AbstractNioChannel) a);
             } else {
                 @SuppressWarnings("unchecked")
@@ -645,6 +650,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
             if (needsToSelectAgain) {
                 // null out entries in the array to allow to have it GC'ed once the Channel close
                 // See https://github.com/netty/netty/issues/2363
+                //重置数组指针
                 selectedKeys.reset(i + 1);
 
                 selectAgain();
@@ -678,6 +684,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
         }
 
         try {
+            //获取注册的事件
             int readyOps = k.readyOps();
             // We first need to call finishConnect() before try to trigger a read(...) or write(...) as otherwise
             // the NIO JDK channel implementation may throw a NotYetConnectedException.
@@ -699,6 +706,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
 
             // Also check for readOps of 0 to workaround possible JDK bug which may otherwise lead
             // to a spin loop
+            //read事件和accept事件 各有处理方式
             if ((readyOps & (SelectionKey.OP_READ | SelectionKey.OP_ACCEPT)) != 0 || readyOps == 0) {
                 unsafe.read();
             }
@@ -859,7 +867,7 @@ public final class NioEventLoop extends SingleThreadEventLoop {
                     //结束 执行rebuildselector的task
                     break;
                 }
-
+                //更新当前时间
                 currentTimeNanos = time;
             }
 

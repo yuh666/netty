@@ -553,7 +553,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                         "is not bound to a wildcard address; binding to a non-wildcard " +
                         "address (" + localAddress + ") anyway as requested.");
             }
-
+            //channel的active状态
             boolean wasActive = isActive();
             try {
                 doBind(localAddress);
@@ -563,10 +563,12 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 return;
             }
 
+            //如果绑定成功了
             if (!wasActive && isActive()) {
                 invokeLater(new Runnable() {
                     @Override
                     public void run() {
+                        //从pipeline传播active事件
                         pipeline.fireChannelActive();
                     }
                 });
@@ -846,6 +848,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             try {
+                //开始读
                 doBeginRead();
             } catch (final Exception e) {
                 invokeLater(new Runnable() {

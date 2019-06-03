@@ -905,6 +905,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
     @Override
     public final ChannelPipeline fireChannelActive() {
+        //从head开始传播active事件
         AbstractChannelHandlerContext.invokeChannelActive(head);
         return this;
     }

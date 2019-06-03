@@ -749,6 +749,10 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         return isTerminated();
     }
 
+    /**
+     * 将task添加到taskQueue中 如果eventLoop还没有启动 那就先将EventLoop启动 并且将线程保存 以便于以后判断inEventLoop
+     * @param task
+     */
     @Override
     public void execute(Runnable task) {
         if (task == null) {
@@ -758,6 +762,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
         boolean inEventLoop = inEventLoop();
         addTask(task);
         if (!inEventLoop) {
+            //启动NioEventLoop关联的线程
             startThread();
             if (isShutdown()) {
                 boolean reject = false;
@@ -863,9 +868,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private void startThread() {
         if (state == ST_NOT_STARTED) {
+            //cas更新状态
             if (STATE_UPDATER.compareAndSet(this, ST_NOT_STARTED, ST_STARTED)) {
                 boolean success = false;
                 try {
+                    //启动关联的线程
                     doStartThread();
                     success = true;
                 } finally {
@@ -897,9 +904,11 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
 
     private void doStartThread() {
         assert thread == null;
+        //这个ThreadPerTaskExecutor会创建一个线程去执行runnable
         executor.execute(new Runnable() {
             @Override
             public void run() {
+                //将线程保存
                 thread = Thread.currentThread();
                 if (interrupted) {
                     thread.interrupt();
@@ -908,6 +917,7 @@ public abstract class SingleThreadEventExecutor extends AbstractScheduledEventEx
                 boolean success = false;
                 updateLastExecutionTime();
                 try {
+                    //调用NioEventLoop的run方法
                     SingleThreadEventExecutor.this.run();
                     success = true;
                 } catch (Throwable t) {

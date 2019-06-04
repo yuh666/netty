@@ -80,6 +80,7 @@ final class ChannelHandlerMask {
     }
 
     /**
+     * 需要执行的事件 默认是所有inbound或者outbound事件 可以通过skip来跳过
      * Calculate the {@code executionMask}.
      */
     private static int mask0(Class<? extends ChannelHandler> handlerType) {

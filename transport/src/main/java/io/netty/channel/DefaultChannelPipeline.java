@@ -61,6 +61,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
     private static final AtomicReferenceFieldUpdater<DefaultChannelPipeline, MessageSizeEstimator.Handle> ESTIMATOR =
             AtomicReferenceFieldUpdater.newUpdater(
                     DefaultChannelPipeline.class, MessageSizeEstimator.Handle.class, "estimatorHandle");
+    //handler 节点是以ctx的形式存在于pipeline上的
     final AbstractChannelHandlerContext head;
     final AbstractChannelHandlerContext tail;
 
@@ -1394,6 +1395,7 @@ public class DefaultChannelPipeline implements ChannelPipeline {
 
         @Override
         public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) {
+            //实际写出数据
             unsafe.write(msg, promise);
         }
 
@@ -1435,8 +1437,10 @@ public class DefaultChannelPipeline implements ChannelPipeline {
             ctx.fireChannelInactive();
         }
 
+
         @Override
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            //直接向下传播事件
             ctx.fireChannelRead(msg);
         }
 

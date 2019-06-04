@@ -101,7 +101,9 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
      * @param socket    the {@link SocketChannel} which will be used
      */
     public NioSocketChannel(Channel parent, SocketChannel socket) {
+        //将accept这个channel的serverchannel保存到parent 并将jdk的socketchannel保存
         super(parent, socket);
+        //创建配置对象
         config = new NioSocketChannelConfig(this, socket.socket());
     }
 
@@ -464,7 +466,9 @@ public class NioSocketChannel extends AbstractNioByteChannel implements io.netty
     private final class NioSocketChannelConfig extends DefaultSocketChannelConfig {
         private volatile int maxBytesPerGatheringWrite = Integer.MAX_VALUE;
         private NioSocketChannelConfig(NioSocketChannel channel, Socket javaSocket) {
+            //将jdk的channel保存
             super(channel, javaSocket);
+            //设置写数据时的速率 是socket的sendBuffer << 1
             calculateMaxBytesPerGatheringWrite();
         }
 

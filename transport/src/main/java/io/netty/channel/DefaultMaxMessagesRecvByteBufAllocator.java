@@ -137,11 +137,19 @@ public abstract class DefaultMaxMessagesRecvByteBufAllocator implements MaxMessa
             return continueReading(defaultMaybeMoreSupplier);
         }
 
+        /**
+         * 是否继续读
+         * @param maybeMoreDataSupplier A supplier that determines if there maybe more data to read.
+         * @return
+         */
         @Override
         public boolean continueReading(UncheckedBooleanSupplier maybeMoreDataSupplier) {
+                    //继续读
             return config.isAutoRead() &&
+                    //单次读的数据量
                    (!respectMaybeMoreData || maybeMoreDataSupplier.get()) &&
-                   totalMessages < maxMessagePerRead &&
+                   //读到的连接数小于最大单次连接 默认是16
+                    totalMessages < maxMessagePerRead &&
                    totalBytesRead > 0;
         }
 

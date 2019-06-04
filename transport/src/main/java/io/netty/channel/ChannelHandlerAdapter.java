@@ -51,6 +51,7 @@ public abstract class ChannelHandlerAdapter implements ChannelHandler {
          *
          * See <a href="https://github.com/netty/netty/issues/2289">#2289</a>.
          */
+        //反射还要加个缓存 真几把讲究
         Class<?> clazz = getClass();
         Map<Class<?>, Boolean> cache = InternalThreadLocalMap.get().handlerSharableCache();
         Boolean sharable = cache.get(clazz);

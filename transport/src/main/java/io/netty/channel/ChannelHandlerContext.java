@@ -121,6 +121,7 @@ import java.nio.channels.Channels;
  * {@link ChannelPipeline} to find out more about inbound and outbound operations,
  * what fundamental differences they have, how they flow in a  pipeline,  and how to handle
  * the operation in your application.
+ * pipeline节点的接口 每个节点都应该能够传播读写事件
  */
 public interface ChannelHandlerContext extends AttributeMap, ChannelInboundInvoker, ChannelOutboundInvoker {
 

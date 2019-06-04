@@ -241,17 +241,22 @@ public class ServerBootstrap extends AbstractBootstrap<ServerBootstrap, ServerCh
         @Override
         @SuppressWarnings("unchecked")
         public void channelRead(ChannelHandlerContext ctx, Object msg) {
+            //接收到的socketChannel
             final Channel child = (Channel) msg;
 
+            //添加客户端的handler channelInnitializer
             child.pipeline().addLast(childHandler);
-
+            //设置socketchannel的option 就是放到channel对象里面config对象里面
+            // 具体来说就是 NioSocketChannel 和 NioServerSocketChannel
             setChannelOptions(child, childOptions, logger);
 
+            //设置attr
             for (Entry<AttributeKey<?>, Object> e: childAttrs) {
                 child.attr((AttributeKey<Object>) e.getKey()).set(e.getValue());
             }
 
             try {
+                //
                 childGroup.register(child).addListener(new ChannelFutureListener() {
                     @Override
                     public void operationComplete(ChannelFuture future) throws Exception {

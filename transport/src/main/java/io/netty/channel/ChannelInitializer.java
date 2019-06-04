@@ -100,6 +100,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
     }
 
     /**
+     * 这是个特殊的handler 添加完childhandler之后就会将自己删除
      * {@inheritDoc} If override this method ensure you call super!
      */
     @Override
@@ -126,6 +127,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
     private boolean initChannel(ChannelHandlerContext ctx) throws Exception {
         if (initMap.add(ctx)) { // Guard against re-entrance.
             try {
+                //回调自己实现的initChannel 这步就将自己的handler添加到了pipeline上
                 initChannel((C) ctx.channel());
             } catch (Throwable cause) {
                 // Explicitly call exceptionCaught(...) as we removed the handler before calling initChannel(...).
@@ -134,6 +136,7 @@ public abstract class ChannelInitializer<C extends Channel> extends ChannelInbou
             } finally {
                 ChannelPipeline pipeline = ctx.pipeline();
                 if (pipeline.context(this) != null) {
+                    //将自己移除pipeline
                     pipeline.remove(this);
                 }
             }

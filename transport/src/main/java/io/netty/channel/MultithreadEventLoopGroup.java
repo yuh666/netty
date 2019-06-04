@@ -89,6 +89,7 @@ public abstract class MultithreadEventLoopGroup extends MultithreadEventExecutor
 
     @Override
     public ChannelFuture register(ChannelPromise promise) {
+        //选择一个NioEventLoop去执行注册
         return next().register(promise);
     }
 

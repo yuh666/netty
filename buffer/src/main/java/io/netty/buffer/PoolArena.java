@@ -143,6 +143,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
     abstract boolean isDirect();
 
     PooledByteBuf<T> allocate(PoolThreadCache cache, int reqCapacity, int maxCapacity) {
+        //选择一个复用的byteBuf
         PooledByteBuf<T> buf = newByteBuf(maxCapacity);
         allocate(cache, buf, reqCapacity);
         return buf;
@@ -178,6 +179,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
             int tableIdx;
             PoolSubpage<T>[] table;
             boolean tiny = isTiny(normCapacity);
+            //先从缓存中分配
             if (tiny) { // < 512
                 if (cache.allocateTiny(this, buf, reqCapacity, normCapacity)) {
                     // was able to allocate out of the cache so move on
@@ -194,6 +196,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
                 table = smallSubpagePools;
             }
 
+            //如果失败了就从内存分配
             final PoolSubpage<T> head = table[tableIdx];
 
             /**

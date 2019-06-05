@@ -46,6 +46,7 @@ final class PoolThreadCache {
     final PoolArena<ByteBuffer> directArena;
 
     // Hold the caches for the different size classes, which are tiny, small and normal.
+    //6中规格的memoryRegionCache 数组 heap三种 direct三种 每种里面的数量还是不一致的
     private final MemoryRegionCache<byte[]>[] tinySubPageHeapCaches;
     private final MemoryRegionCache<byte[]>[] smallSubPageHeapCaches;
     private final MemoryRegionCache<ByteBuffer>[] tinySubPageDirectCaches;
@@ -71,6 +72,8 @@ final class PoolThreadCache {
         this.freeSweepAllocationThreshold = freeSweepAllocationThreshold;
         this.heapArena = heapArena;
         this.directArena = directArena;
+        //真正创建mrc数组 tiny small normal
+        //direct
         if (directArena != null) {
             tinySubPageDirectCaches = createSubPageCaches(
                     tinyCacheSize, PoolArena.numTinySubpagePools, SizeClass.Tiny);
@@ -89,6 +92,7 @@ final class PoolThreadCache {
             normalDirectCaches = null;
             numShiftsNormalDirect = -1;
         }
+        //heap的
         if (heapArena != null) {
             // Create the caches for the heap allocations
             tinySubPageHeapCaches = createSubPageCaches(
@@ -367,8 +371,11 @@ final class PoolThreadCache {
     }
 
     private abstract static class MemoryRegionCache<T> {
+        //里面有多少个节点
         private final int size;
+        //里面是chunk和handler 指向唯一的一块内存
         private final Queue<Entry<T>> queue;
+        //这个MR是什么类型的
         private final SizeClass sizeClass;
         private int allocations;
 

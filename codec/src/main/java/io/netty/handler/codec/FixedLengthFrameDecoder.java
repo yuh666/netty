@@ -49,11 +49,13 @@ public class FixedLengthFrameDecoder extends ByteToMessageDecoder {
      */
     public FixedLengthFrameDecoder(int frameLength) {
         checkPositive(frameLength, "frameLength");
+        //固定长度
         this.frameLength = frameLength;
     }
 
     @Override
     protected final void decode(ChannelHandlerContext ctx, ByteBuf in, List<Object> out) throws Exception {
+        //实际解码
         Object decoded = decode(ctx, in);
         if (decoded != null) {
             out.add(decoded);
@@ -71,8 +73,10 @@ public class FixedLengthFrameDecoder extends ByteToMessageDecoder {
     protected Object decode(
             @SuppressWarnings("UnusedParameters") ChannelHandlerContext ctx, ByteBuf in) throws Exception {
         if (in.readableBytes() < frameLength) {
+            //不足frameLength 返回null
             return null;
         } else {
+            //去一个frameLength长度的bytebuf slice返回
             return in.readRetainedSlice(frameLength);
         }
     }

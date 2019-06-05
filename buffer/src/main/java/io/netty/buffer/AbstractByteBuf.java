@@ -41,6 +41,7 @@ import static io.netty.util.internal.MathUtil.isOutOfBounds;
 import static io.netty.util.internal.ObjectUtil.checkPositiveOrZero;
 
 /**
+ * 做了一些基本实现 真正的读写用的是底层实现 定义了index
  * A skeletal implementation of a buffer.
  */
 public abstract class AbstractByteBuf extends ByteBuf {

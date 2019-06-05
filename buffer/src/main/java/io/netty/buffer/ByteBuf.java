@@ -244,6 +244,7 @@ import java.nio.charset.UnsupportedCharsetException;
  *
  * Please refer to {@link ByteBufInputStream} and
  * {@link ByteBufOutputStream}.
+ * ByteBuf的顶层抽象 定义了一些read和write方法
  */
 public abstract class ByteBuf implements ReferenceCounted, Comparable<ByteBuf> {
 

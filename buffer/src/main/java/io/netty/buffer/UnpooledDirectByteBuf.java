@@ -38,6 +38,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
 
     private final ByteBufAllocator alloc;
 
+    //直接内存依赖的是 jdk的ByteBuffer
     private ByteBuffer buffer;
     private ByteBuffer tmpNioBuf;
     private int capacity;
@@ -214,6 +215,7 @@ public class UnpooledDirectByteBuf extends AbstractReferenceCountedByteBuf {
 
     @Override
     protected byte _getByte(int index) {
+        //采用jdk ByteBuffer的API获取  实际上也是用的Unsafe
         return buffer.get(index);
     }
 

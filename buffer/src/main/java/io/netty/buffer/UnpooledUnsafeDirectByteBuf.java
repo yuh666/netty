@@ -63,6 +63,7 @@ public class UnpooledUnsafeDirectByteBuf extends AbstractReferenceCountedByteBuf
         }
 
         this.alloc = alloc;
+        //使用jdkByteBuf分配内存
         setByteBuffer(allocateDirect(initialCapacity), false);
     }
 
@@ -137,6 +138,7 @@ public class UnpooledUnsafeDirectByteBuf extends AbstractReferenceCountedByteBuf
             }
         }
         this.buffer = buffer;
+        //保存内存的首地址
         memoryAddress = PlatformDependent.directBufferAddress(buffer);
         tmpNioBuf = null;
         capacity = buffer.remaining();
@@ -225,6 +227,7 @@ public class UnpooledUnsafeDirectByteBuf extends AbstractReferenceCountedByteBuf
 
     @Override
     protected byte _getByte(int index) {
+        //直接用首地址加上偏移量去获取
         return UnsafeByteBufUtil.getByte(addr(index));
     }
 
@@ -501,6 +504,7 @@ public class UnpooledUnsafeDirectByteBuf extends AbstractReferenceCountedByteBuf
     }
 
     long addr(int index) {
+        //直接用直接内存首地址加上偏移量
         return memoryAddress + index;
     }
 

@@ -38,6 +38,7 @@ import static io.netty.util.internal.ObjectUtil.checkNotNull;
 public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
 
     private final ByteBufAllocator alloc;
+    //heap依赖的是byte[]
     byte[] array;
     private ByteBuffer tmpNioBuf;
 
@@ -58,7 +59,9 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
         }
 
         this.alloc = alloc;
+        //将array设置进去
         setArray(allocateArray(initialCapacity));
+        //将index设置到abstractByteBuf里面
         setIndex(0, 0);
     }
 
@@ -334,6 +337,7 @@ public class UnpooledHeapByteBuf extends AbstractReferenceCountedByteBuf {
 
     @Override
     protected byte _getByte(int index) {
+        //直接采用下标的方式去获取
         return HeapByteBufUtil.getByte(array, index);
     }
 

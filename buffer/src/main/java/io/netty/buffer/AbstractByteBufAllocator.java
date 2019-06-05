@@ -25,6 +25,9 @@ import io.netty.util.internal.StringUtil;
 
 /**
  * Skeletal {@link ByteBufAllocator} implementation to extend.
+ * 实现了判别heap还是direct的逻辑 如果有preferDrirect(默认为false) 和 unsafe的话 就分配direct
+ * 具体是Pooled还是Unpooled要看用的是哪个实现  子类实现两个newXXX接口 具体是Unsafe还是非Unsafe 要看jre是否有Unsafe 这个由子类自动判别
+ * 这一层决定的是 是不是direct
  */
 public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
     static final int DEFAULT_INITIAL_CAPACITY = 256;
@@ -100,6 +103,7 @@ public abstract class AbstractByteBufAllocator implements ByteBufAllocator {
         directByDefault = preferDirect && PlatformDependent.hasUnsafe();
         emptyBuf = new EmptyByteBuf(this);
     }
+
 
     @Override
     public ByteBuf buffer() {

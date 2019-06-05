@@ -96,28 +96,34 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
      *                          be created.
      */
     protected Object decode(ChannelHandlerContext ctx, ByteBuf buffer) throws Exception {
+        //找到换行符第一个字符
         final int eol = findEndOfLine(buffer);
         if (!discarding) {
+            //非丢弃模式
             if (eol >= 0) {
+                //有换行符
                 final ByteBuf frame;
                 final int length = eol - buffer.readerIndex();
                 final int delimLength = buffer.getByte(eol) == '\r'? 2 : 1;
-
+                //单行超出最长 返回null 并将读指针移动到换行符后面
                 if (length > maxLength) {
                     buffer.readerIndex(eol + delimLength);
                     fail(ctx, length);
                     return null;
                 }
-
+                //如果没有 就返回
                 if (stripDelimiter) {
+                    //不带换行符
                     frame = buffer.readRetainedSlice(length);
                     buffer.skipBytes(delimLength);
                 } else {
+                    //带换行符
                     frame = buffer.readRetainedSlice(length + delimLength);
                 }
 
                 return frame;
             } else {
+                //没有换行符 并且可读的超过了最大长度限制 将数据丢弃 并且进入丢弃模式
                 final int length = buffer.readableBytes();
                 if (length > maxLength) {
                     discardedBytes = length;
@@ -131,7 +137,9 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
                 return null;
             }
         } else {
+            //丢弃模式
             if (eol >= 0) {
+                //丢弃过程中遇见换行符 移到换行符后 并且关闭丢弃模式
                 final int length = discardedBytes + eol - buffer.readerIndex();
                 final int delimLength = buffer.getByte(eol) == '\r'? 2 : 1;
                 buffer.readerIndex(eol + delimLength);
@@ -141,11 +149,13 @@ public class LineBasedFrameDecoder extends ByteToMessageDecoder {
                     fail(ctx, length);
                 }
             } else {
+                //没有换行符 继续丢弃
                 discardedBytes += buffer.readableBytes();
                 buffer.readerIndex(buffer.writerIndex());
                 // We skip everything in the buffer, we need to set the offset to 0 again.
                 offset = 0;
             }
+            //返回空
             return null;
         }
     }

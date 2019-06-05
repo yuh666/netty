@@ -399,43 +399,52 @@ public class LengthFieldBasedFrameDecoder extends ByteToMessageDecoder {
         if (discardingTooLongFrame) {
             discardingTooLongFrame(in);
         }
-
+        //可读的数据小于长度的偏移 返回null
         if (in.readableBytes() < lengthFieldEndOffset) {
             return null;
         }
 
+        //数据包长度的开始字节
         int actualLengthFieldOffset = in.readerIndex() + lengthFieldOffset;
+        //计算数据包的真实长度
         long frameLength = getUnadjustedFrameLength(in, actualLengthFieldOffset, lengthFieldLength, byteOrder);
 
         if (frameLength < 0) {
             failOnNegativeLengthField(in, frameLength, lengthFieldEndOffset);
         }
-
+        //加上调整长度 和开始偏移扥长度以及标识length字节的长度
         frameLength += lengthAdjustment + lengthFieldEndOffset;
 
+        //调整的有问题
         if (frameLength < lengthFieldEndOffset) {
             failOnFrameLengthLessThanLengthFieldEndOffset(in, frameLength, lengthFieldEndOffset);
         }
 
+        //超出最大长度限制 抛弃返回空 并且开启丢弃模式
         if (frameLength > maxFrameLength) {
             exceededFrameLength(in, frameLength);
             return null;
         }
 
+        //可读数据不足
         // never overflows because it's less than maxFrameLength
         int frameLengthInt = (int) frameLength;
         if (in.readableBytes() < frameLengthInt) {
             return null;
         }
 
+        //消减的字节过多
         if (initialBytesToStrip > frameLengthInt) {
             failOnFrameLengthLessThanInitialBytesToStrip(in, frameLength, initialBytesToStrip);
         }
+        //跳过消减的字节
         in.skipBytes(initialBytesToStrip);
 
         // extract frame
         int readerIndex = in.readerIndex();
+        //实际的长度
         int actualFrameLength = frameLengthInt - initialBytesToStrip;
+        //读取实际的长度
         ByteBuf frame = extractFrame(ctx, in, readerIndex, actualFrameLength);
         in.readerIndex(readerIndex + actualFrameLength);
         return frame;

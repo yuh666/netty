@@ -107,6 +107,7 @@ public abstract class AbstractReferenceCountedByteBuf extends AbstractByteBuf {
 
     private boolean handleRelease(boolean result) {
         if (result) {
+            //如果已经没有引用 那么就可以开始释放
             deallocate();
         }
         return result;

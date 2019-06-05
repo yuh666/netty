@@ -186,10 +186,12 @@ final class PoolThreadCache {
 
     @SuppressWarnings({ "unchecked", "rawtypes" })
     private boolean allocate(MemoryRegionCache<?> cache, PooledByteBuf buf, int reqCapacity) {
+        //未命中缓存
         if (cache == null) {
             // no cache found so just return false here
             return false;
         }
+        //命中缓存
         boolean allocated = cache.allocate(buf, reqCapacity);
         if (++ allocations >= freeSweepAllocationThreshold) {
             allocations = 0;
@@ -308,6 +310,13 @@ final class PoolThreadCache {
         cache.trim();
     }
 
+    /**
+     * 取出对应大小的MemoryRegionCache 因为tiny的大小是16的倍数 前面的已经进行了规格化 所以直接除以16
+     * 就可以获得mrc的索引
+     * @param area
+     * @param normCapacity
+     * @return
+     */
     private MemoryRegionCache<?> cacheForTiny(PoolArena<?> area, int normCapacity) {
         int idx = PoolArena.tinyIdx(normCapacity);
         if (area.isDirect()) {
@@ -396,6 +405,7 @@ final class PoolThreadCache {
          */
         @SuppressWarnings("unchecked")
         public final boolean add(PoolChunk<T> chunk, ByteBuffer nioBuffer, long handle) {
+            //添加到memoryRegionCache里面
             Entry<T> entry = newEntry(chunk, nioBuffer, handle);
             boolean queued = queue.offer(entry);
             if (!queued) {
@@ -410,11 +420,14 @@ final class PoolThreadCache {
          * Allocate something out of the cache if possible and remove the entry from the cache.
          */
         public final boolean allocate(PooledByteBuf<T> buf, int reqCapacity) {
+            //从队列中弹出一个entry
             Entry<T> entry = queue.poll();
             if (entry == null) {
                 return false;
             }
+            //用entry初始化ByteBuffer
             initBuf(entry.chunk, entry.nioBuffer, entry.handle, buf, reqCapacity);
+            //回收对象 把entry压出recycler的stack
             entry.recycle();
 
             // allocations is not thread-safe which is fine as this is only called from the same thread all time.

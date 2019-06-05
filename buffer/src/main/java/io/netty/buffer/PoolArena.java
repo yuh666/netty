@@ -29,6 +29,12 @@ import java.util.concurrent.atomic.AtomicInteger;
 import static io.netty.util.internal.ObjectUtil.checkPositiveOrZero;
 import static java.lang.Math.max;
 
+/**
+ * PoolArena里面有很多chunklist以双向链表连接 不同的chunkList根据使用率的不同区分
+ * chunkList里面的chunk以单向链表连接
+ * PoolSubpage是chunk的拆分
+ * @param <T>
+ */
 abstract class PoolArena<T> implements PoolArenaMetric {
     static final boolean HAS_UNSAFE = PlatformDependent.hasUnsafe();
 
@@ -173,19 +179,28 @@ abstract class PoolArena<T> implements PoolArenaMetric {
         return (normCapacity & 0xFFFFFE00) == 0;
     }
 
+    /**
+     * 从缓存中寻找可用的内存 进行复用
+     * @param cache
+     * @param buf
+     * @param reqCapacity
+     */
     private void allocate(PoolThreadCache cache, PooledByteBuf<T> buf, final int reqCapacity) {
+        //将申请内存的大小进行规格化 让其增加到最接近的16的倍数(或者比16小) 方面后续缓存中内存的定位
         final int normCapacity = normalizeCapacity(reqCapacity);
+        //判断是否小于8K
         if (isTinyOrSmall(normCapacity)) { // capacity < pageSize
             int tableIdx;
             PoolSubpage<T>[] table;
+            //判断是否小于512
             boolean tiny = isTiny(normCapacity);
-            //先从缓存中分配
             if (tiny) { // < 512
                 if (cache.allocateTiny(this, buf, reqCapacity, normCapacity)) {
                     // was able to allocate out of the cache so move on
                     return;
                 }
                 tableIdx = tinyIdx(normCapacity);
+                //subPage 数组就类似与mrc 由大小不同subPage组成 每个subPage还由双向链表连接
                 table = tinySubpagePools;
             } else {
                 if (cache.allocateSmall(this, buf, reqCapacity, normCapacity)) {
@@ -196,7 +211,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
                 table = smallSubpagePools;
             }
 
-            //如果失败了就从内存分配
+            //缓存命中失败了 && 是tiny或者small的话 就会用subPage进行分配 subPage内部指向的也是chunk
             final PoolSubpage<T> head = table[tableIdx];
 
             /**
@@ -207,8 +222,10 @@ abstract class PoolArena<T> implements PoolArenaMetric {
                 final PoolSubpage<T> s = head.next;
                 if (s != head) {
                     assert s.doNotDestroy && s.elemSize == normCapacity;
+                    //取出一个指向内存的handle
                     long handle = s.allocate();
                     assert handle >= 0;
+                    //用subPage内存进行init
                     s.chunk.initBufWithSubpage(buf, null, handle, reqCapacity);
                     incTinySmallAllocation(tiny);
                     return;
@@ -226,6 +243,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
                 // was able to allocate out of the cache so move on
                 return;
             }
+            //未命中缓存 真正去分配内存
             synchronized (this) {
                 allocateNormal(buf, reqCapacity, normCapacity);
                 ++allocationsNormal;
@@ -237,6 +255,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
     }
 
     // Method must be called inside synchronized(this) { ... } block
+    //刚开始的时候 链表为空
     private void allocateNormal(PooledByteBuf<T> buf, int reqCapacity, int normCapacity) {
         if (q050.allocate(buf, reqCapacity, normCapacity) || q025.allocate(buf, reqCapacity, normCapacity) ||
             q000.allocate(buf, reqCapacity, normCapacity) || qInit.allocate(buf, reqCapacity, normCapacity) ||
@@ -245,9 +264,12 @@ abstract class PoolArena<T> implements PoolArenaMetric {
         }
 
         // Add a new chunk.
+        //新建一个chunk
         PoolChunk<T> c = newChunk(pageSize, maxOrder, pageShifts, chunkSize);
+        //将内存分配给bytebuf
         boolean success = c.allocate(buf, reqCapacity, normCapacity);
         assert success;
+        //加到初始chunkList里面 后面使用率升高的话 chunk会自己进行迁移
         qInit.add(c);
     }
 
@@ -273,6 +295,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
             activeBytesHuge.add(-size);
             deallocationsHuge.increment();
         } else {
+            //寻找合适大小的mrc
             SizeClass sizeClass = sizeClass(normCapacity);
             if (cache != null && cache.add(this, chunk, nioBuffer, handle, normCapacity, sizeClass)) {
                 // cached so not free it.
@@ -748,6 +771,7 @@ abstract class PoolArena<T> implements PoolArenaMetric {
                 int pageShifts, int chunkSize) {
             if (directMemoryCacheAlignment == 0) {
                 return new PoolChunk<ByteBuffer>(this,
+                        //调用jdk bytebuffer进行实际的内存分配
                         allocateDirect(chunkSize), pageSize, maxOrder,
                         pageShifts, chunkSize, 0);
             }

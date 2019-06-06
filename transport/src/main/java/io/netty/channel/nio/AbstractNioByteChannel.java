@@ -218,6 +218,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
         return doWriteInternal(in, in.current());
     }
 
+    //实际的写
     private int doWriteInternal(ChannelOutboundBuffer in, Object msg) throws Exception {
         if (msg instanceof ByteBuf) {
             ByteBuf buf = (ByteBuf) msg;
@@ -225,7 +226,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
                 in.remove();
                 return 0;
             }
-
+            //直接写到java socket
             final int localFlushedAmount = doWriteBytes(buf);
             if (localFlushedAmount > 0) {
                 in.progress(localFlushedAmount);
@@ -258,21 +259,25 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
 
     @Override
     protected void doWrite(ChannelOutboundBuffer in) throws Exception {
+        //自旋写 自旋次数
         int writeSpinCount = config().getWriteSpinCount();
         do {
+            //当前flushed节点
             Object msg = in.current();
             if (msg == null) {
                 // Wrote all messages.
+                //标记不可写
                 clearOpWrite();
                 // Directly return here so incompleteWrite(...) is not called.
                 return;
             }
             writeSpinCount -= doWriteInternal(in, msg);
         } while (writeSpinCount > 0);
-
+        //还有没写完的
         incompleteWrite(writeSpinCount < 0);
     }
 
+    //将bytebuf 转化为direct 实现zerocopy
     @Override
     protected final Object filterOutboundMessage(Object msg) {
         if (msg instanceof ByteBuf) {
@@ -295,6 +300,7 @@ public abstract class AbstractNioByteChannel extends AbstractNioChannel {
     protected final void incompleteWrite(boolean setOpWrite) {
         // Did not write completely.
         if (setOpWrite) {
+            //注册写事件
             setOpWrite();
         } else {
             // It is possible that we have set the write OP, woken up by NIO because the socket is writable, and then

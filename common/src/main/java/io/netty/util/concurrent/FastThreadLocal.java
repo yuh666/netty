@@ -122,6 +122,7 @@ public class FastThreadLocal<V> {
         variablesToRemove.remove(variable);
     }
 
+    //jvm 唯一的index
     private final int index;
 
     public FastThreadLocal() {
@@ -133,12 +134,14 @@ public class FastThreadLocal<V> {
      */
     @SuppressWarnings("unchecked")
     public final V get() {
+        //从线程中取得ThreadLocalMap数组
         InternalThreadLocalMap threadLocalMap = InternalThreadLocalMap.get();
+        //通过索引直接取出元素
         Object v = threadLocalMap.indexedVariable(index);
         if (v != InternalThreadLocalMap.UNSET) {
             return (V) v;
         }
-
+        //如果取出的为UNSET 则要初始化
         return initialize(threadLocalMap);
     }
 
@@ -174,11 +177,13 @@ public class FastThreadLocal<V> {
     private V initialize(InternalThreadLocalMap threadLocalMap) {
         V v = null;
         try {
+            //调用重写的方法
             v = initialValue();
         } catch (Exception e) {
             PlatformDependent.throwException(e);
         }
 
+        //放入
         threadLocalMap.setIndexedVariable(index, v);
         addToVariablesToRemove(threadLocalMap, this);
         return v;

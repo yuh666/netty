@@ -95,21 +95,28 @@ public abstract class MessageToByteEncoder<I> extends ChannelOutboundHandlerAdap
         return matcher.match(msg);
     }
 
+    //这个处理器要放在业务处理器的上边
     @Override
     public void write(ChannelHandlerContext ctx, Object msg, ChannelPromise promise) throws Exception {
         ByteBuf buf = null;
         try {
+            //判断是否是能处理的类型
             if (acceptOutboundMessage(msg)) {
                 @SuppressWarnings("unchecked")
+                        //类型转换
                 I cast = (I) msg;
+                //分配内存 iobuffer
                 buf = allocateBuffer(ctx, cast, preferDirect);
                 try {
+                    //实际编码
                     encode(ctx, cast, buf);
                 } finally {
+                    //释放对象
                     ReferenceCountUtil.release(cast);
                 }
 
                 if (buf.isReadable()) {
+                    //向下传播
                     ctx.write(buf, promise);
                 } else {
                     buf.release();
@@ -117,6 +124,7 @@ public abstract class MessageToByteEncoder<I> extends ChannelOutboundHandlerAdap
                 }
                 buf = null;
             } else {
+                //不能处理直接向下传播
                 ctx.write(msg, promise);
             }
         } catch (EncoderException e) {

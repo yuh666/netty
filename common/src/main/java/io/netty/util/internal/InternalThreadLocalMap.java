@@ -68,6 +68,7 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
     public static InternalThreadLocalMap get() {
         Thread thread = Thread.currentThread();
         if (thread instanceof FastThreadLocalThread) {
+            //直接从FastThreadLocalThread中获取
             return fastGet((FastThreadLocalThread) thread);
         } else {
             return slowGet();
@@ -83,9 +84,11 @@ public final class InternalThreadLocalMap extends UnpaddedInternalThreadLocalMap
     }
 
     private static InternalThreadLocalMap slowGet() {
+        //调用jdk实现的threadlocal保存netty自己的threadlocalMap
         ThreadLocal<InternalThreadLocalMap> slowThreadLocalMap = UnpaddedInternalThreadLocalMap.slowThreadLocalMap;
         InternalThreadLocalMap ret = slowThreadLocalMap.get();
         if (ret == null) {
+            //首次为空
             ret = new InternalThreadLocalMap();
             slowThreadLocalMap.set(ret);
         }

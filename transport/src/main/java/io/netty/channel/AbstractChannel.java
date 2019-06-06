@@ -870,7 +870,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         @Override
         public final void write(Object msg, ChannelPromise promise) {
             assertEventLoop();
-
+            //写队列
             ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
             if (outboundBuffer == null) {
                 // If the outboundBuffer is null we know the channel was closed and so
@@ -885,6 +885,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
 
             int size;
             try {
+                //niobyte 转化为direct for zero copy
                 msg = filterOutboundMessage(msg);
                 size = pipeline.estimatorHandle().size(msg);
                 if (size < 0) {
@@ -895,7 +896,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
                 ReferenceCountUtil.release(msg);
                 return;
             }
-
+            //加入写队列
             outboundBuffer.addMessage(msg, size, promise);
         }
 
@@ -903,11 +904,12 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
         public final void flush() {
             assertEventLoop();
 
+            //写队列
             ChannelOutboundBuffer outboundBuffer = this.outboundBuffer;
             if (outboundBuffer == null) {
                 return;
             }
-
+            //移动flush指针
             outboundBuffer.addFlush();
             flush0();
         }
@@ -942,6 +944,7 @@ public abstract class AbstractChannel extends DefaultAttributeMap implements Cha
             }
 
             try {
+                //执行写
                 doWrite(outboundBuffer);
             } catch (Throwable t) {
                 if (t instanceof IOException && config().isAutoClose()) {

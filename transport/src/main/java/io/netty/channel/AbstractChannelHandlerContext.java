@@ -773,7 +773,7 @@ abstract class AbstractChannelHandlerContext implements ChannelHandlerContext, R
         }
     }
 
-
+    //在ctx里面 invokexxx 会调用自己内部的xxx 然后在自己内部调用firexxx 会调用findNext.invokexxx
     //write会找到下个outbound节点 支持write事件的
     private void write(Object msg, boolean flush, ChannelPromise promise) {
         ObjectUtil.checkNotNull(msg, "msg");

@@ -51,6 +51,16 @@ abstract class PooledByteBuf<T> extends AbstractReferenceCountedByteBuf {
         init0(chunk, null, 0, chunk.offset, length, length, null);
     }
 
+    /**
+     * 将PooledByteBuf里面的chunk和handle都赋值
+     * @param chunk
+     * @param nioBuffer
+     * @param handle
+     * @param offset
+     * @param length
+     * @param maxLength
+     * @param cache
+     */
     private void init0(PoolChunk<T> chunk, ByteBuffer nioBuffer,
                        long handle, int offset, int length, int maxLength, PoolThreadCache cache) {
         assert handle >= 0;

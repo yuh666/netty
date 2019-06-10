@@ -95,15 +95,18 @@ final class PoolThreadCache {
         //heap的
         if (heapArena != null) {
             // Create the caches for the heap allocations
+            //创建tiny类型的mrc数组 len=32
             tinySubPageHeapCaches = createSubPageCaches(
                     tinyCacheSize, PoolArena.numTinySubpagePools, SizeClass.Tiny);
+            //创建small类型mrc数组 大小是4
             smallSubPageHeapCaches = createSubPageCaches(
                     smallCacheSize, heapArena.numSmallSubpagePools, SizeClass.Small);
 
             numShiftsNormalHeap = log2(heapArena.pageSize);
+            //创建normal类型mrc数组 len=4
             normalHeapCaches = createNormalCaches(
                     normalCacheSize, maxCachedBufferCapacity, heapArena);
-
+            //arana的引用+1
             heapArena.numThreadCaches.getAndIncrement();
         } else {
             // No heapArea is configured so just null out all caches
@@ -318,6 +321,7 @@ final class PoolThreadCache {
      * @return
      */
     private MemoryRegionCache<?> cacheForTiny(PoolArena<?> area, int normCapacity) {
+        //将申请的内存除以16 就是在mrc数组中的索引
         int idx = PoolArena.tinyIdx(normCapacity);
         if (area.isDirect()) {
             return cache(tinySubPageDirectCaches, idx);
@@ -380,11 +384,11 @@ final class PoolThreadCache {
     }
 
     private abstract static class MemoryRegionCache<T> {
-        //里面有多少个节点
+        //queue里面节点缓存内存的大小
         private final int size;
         //里面是chunk和handler 指向唯一的一块内存
         private final Queue<Entry<T>> queue;
-        //这个MR是什么类型的
+        //这个MR是什么类型的 tiny small normal
         private final SizeClass sizeClass;
         private int allocations;
 
@@ -427,7 +431,7 @@ final class PoolThreadCache {
             }
             //用entry初始化ByteBuffer
             initBuf(entry.chunk, entry.nioBuffer, entry.handle, buf, reqCapacity);
-            //回收对象 把entry压出recycler的stack
+            //回收对象 将chunk和handle都指向null  把entry压入recycler的stack
             entry.recycle();
 
             // allocations is not thread-safe which is fine as this is only called from the same thread all time.

@@ -68,7 +68,7 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
         // As an example:
         // - If a PoolChunkList has minUsage == 25 we are allowed to allocate at most 75% of the chunkSize because
         //   this is the maximum amount available in any PoolChunk in this PoolChunkList.
-        return  (int) (chunkSize * (100L - minUsage) / 100L);
+        return (int) (chunkSize * (100L - minUsage) / 100L);
     }
 
     void prevList(PoolChunkList<T> prevList) {
@@ -82,11 +82,15 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
             // be handled by the PoolChunks that are contained in this PoolChunkList.
             return false;
         }
-
+        //从第一个chunk开始遍历
         for (PoolChunk<T> cur = head; cur != null; cur = cur.next) {
+            //分配一块内存 返回内存的id 分配成功就返回
             if (cur.allocate(buf, reqCapacity, normCapacity)) {
+                //计算使用的字节数占chunksize的比例 如果超出了当前的限制
                 if (cur.usage() >= maxUsage) {
+                    //从当前chunkList移除
                     remove(cur);
+                    //加入下一个使用率高一点的chunkList
                     nextList.add(cur);
                 }
                 return true;
@@ -97,6 +101,7 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
 
     boolean free(PoolChunk<T> chunk, long handle, ByteBuffer nioBuffer) {
         chunk.free(handle, nioBuffer);
+        //使用率下来了还要移出来
         if (chunk.usage() < minUsage) {
             remove(chunk);
             // Move the PoolChunk down the PoolChunkList linked-list.
@@ -193,7 +198,7 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
                 return EMPTY_METRICS;
             }
             List<PoolChunkMetric> metrics = new ArrayList<PoolChunkMetric>();
-            for (PoolChunk<T> cur = head;;) {
+            for (PoolChunk<T> cur = head; ; ) {
                 metrics.add(cur);
                 cur = cur.next;
                 if (cur == null) {
@@ -212,7 +217,7 @@ final class PoolChunkList<T> implements PoolChunkListMetric {
                 return "none";
             }
 
-            for (PoolChunk<T> cur = head;;) {
+            for (PoolChunk<T> cur = head; ; ) {
                 buf.append(cur);
                 cur = cur.next;
                 if (cur == null) {
